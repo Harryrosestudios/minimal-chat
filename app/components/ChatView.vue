@@ -8,6 +8,9 @@
                     :content="getMessageContent(message)"
                 />
             </div>
+            <div v-if="errorMessage" class="error-message">
+                {{ errorMessage }}
+            </div>
         </div>
         <div id="textbox-container">
             <TextBox :disabled="chat.status === 'streaming' || chat.status === 'submitted'" @on-message="handleNewPrompt" />
@@ -16,7 +19,10 @@
 </template>
 
 <script setup>
+import { ref } from "vue";
 import { Chat } from "@ai-sdk/vue";
+
+const errorMessage = ref("");
 
 const chat = new Chat({
     api: "/api/chat",
@@ -28,6 +34,10 @@ const chat = new Chat({
 Use Markdown formatting for your responses, but include headers only when necessary (such as to break up multiple sections).` }],
         },
     ],
+    onError: (error) => {
+        console.error("Chat error:", error);
+        errorMessage.value = "Sorry, there was an error processing your request.";
+    },
 });
 
 function getMessageContent(message) {
@@ -41,6 +51,7 @@ function getMessageContent(message) {
 }
 
 function handleNewPrompt(prompt) {
+    errorMessage.value = "";
     chat.sendMessage({ text: prompt });
 }
 </script>
@@ -53,5 +64,13 @@ function handleNewPrompt(prompt) {
 
 #textbox-container {
     padding-bottom: 1.25rem;
+}
+
+.error-message {
+    color: #dc2626;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border-radius: 0.375rem;
+    background-color: #fef2f2;
 }
 </style>
