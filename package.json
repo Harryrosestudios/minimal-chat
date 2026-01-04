@@ -10,8 +10,11 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.2",
+    "@ai-sdk/vue": "^3.0.6",
     "@nuxt/eslint": "1.11.0",
     "@nuxt/ui": "4.2.1",
+    "ai": "^6.0.6",
     "eslint": "^9.0.0",
     "nuxt": "^4.2.1",
     "showdown": "^2.1.0",
