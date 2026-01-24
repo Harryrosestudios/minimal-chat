@@ -60,49 +60,45 @@ async function streamOpenRouterAPI(messageHistory, onChunk) {
     const decoder = new TextDecoder();
     let buffer = "";
 
-    try {
-        let reading = true;
-        while (reading) {
-            const { done, value } = await reader.read();
-            if (done) {
-                reading = false;
+    let reading = true;
+    while (reading) {
+        const { done, value } = await reader.read();
+        if (done) {
+            reading = false;
+            break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+
+        let processing = true;
+        while (processing) {
+            const lineEnd = buffer.indexOf("\n");
+            if (lineEnd === -1) {
+                processing = false;
                 break;
             }
 
-            buffer += decoder.decode(value, { stream: true });
+            const line = buffer.slice(0, lineEnd).trim();
+            buffer = buffer.slice(lineEnd + 1);
 
-            let processing = true;
-            while (processing) {
-                const lineEnd = buffer.indexOf("\n");
-                if (lineEnd === -1) {
+            if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                if (data === "[DONE]") {
                     processing = false;
                     break;
                 }
 
-                const line = buffer.slice(0, lineEnd).trim();
-                buffer = buffer.slice(lineEnd + 1);
-
-                if (line.startsWith("data: ")) {
-                    const data = line.slice(6);
-                    if (data === "[DONE]") {
-                        processing = false;
-                        break;
+                try {
+                    const parsed = JSON.parse(data);
+                    const content = parsed.choices[0].delta.content;
+                    if (content) {
+                        onChunk(content);
                     }
-
-                    try {
-                        const parsed = JSON.parse(data);
-                        const content = parsed.choices[0].delta.content;
-                        if (content) {
-                            onChunk(content);
-                        }
-                    } catch {
-                        // Ignore invalid JSON
-                    }
+                } catch {
+                    // Ignore invalid JSON
                 }
             }
         }
-    } finally {
-        reader.cancel();
     }
 }
 
@@ -125,9 +121,9 @@ async function handleNewPrompt(prompt) {
             messages.value[assistantMessageIndex].content += chunk;
         });
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error:", error.message, error);
         messages.value[assistantMessageIndex].content =
-            "Sorry, there was an error processing your request.";
+            `Sorry, there was an error: ${error.message}`;
     }
 
     isReceiving.value = false;
