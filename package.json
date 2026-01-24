@@ -16,6 +16,7 @@
     "@nuxt/ui": "4.2.1",
     "ai": "^6.0.6",
     "eslint": "^9.0.0",
+    "minimal-chat": "file:",
     "nuxt": "^4.2.1",
     "showdown": "^2.1.0",
     "typescript": "^5.6.3",
